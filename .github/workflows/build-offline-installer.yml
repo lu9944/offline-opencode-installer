@@ -49,6 +49,27 @@ jobs:
           echo
           cat dist/SHA256SUMS
 
+      - name: Acceptance test (offline install from built package)
+        run: |
+          set -euo pipefail
+          bundle="$(ls dist/*.tar.gz | head -1)"
+          work="$RUNNER_TEMP/acceptance"
+          rm -rf "$work"
+          mkdir -p "$work"
+          tar -xzf "$bundle" -C "$work"
+          bundle_dir="$(tar -tzf "$bundle" | head -1 | cut -d/ -f1)"
+          cd "$work/$bundle_dir"
+
+          echo "=== 包内平台 ==="
+          ./install.sh --list
+
+          echo "=== 执行离线安装（模拟目标机器） ==="
+          ./install.sh --install-dir "$work/bin" --no-modify-path
+
+          echo "=== 验证安装结果 ==="
+          "$work/bin/opencode" --version
+          "$work/bin/opencode2" --version
+
       - name: Upload artifacts
         if: ${{ inputs.upload_artifact }}
         uses: actions/upload-artifact@v7

@@ -87,6 +87,7 @@ bash scripts/build-offline-package.sh --version 2.0.29 --variants linux-x64
 ## 安全与校验
 
 - 构建时对每个下载的官方包做 npm **SHA-512 integrity 校验**；
+- 构建流水线自带**端到端自检**：解压产出的离线包 → 运行 `install.sh` 实际安装 → 执行 `opencode --version`，自检失败会阻断发布；
 - 离线包内 `SHA256SUMS` 覆盖所有文件，`install.sh` 安装前自动校验；
 - Release 页面同时提供整包 `SHA256SUMS`，可与下载文件比对。
 
