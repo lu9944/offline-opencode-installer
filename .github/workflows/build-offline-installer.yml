@@ -122,6 +122,8 @@ jobs:
           files=(dist/*.zip dist/SHA256SUMS)
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "${files[@]}" --clobber
+            # 重建同一版本时同步刷新说明文字
+            gh release edit "$tag" --notes-file release-notes.md
           else
             gh release create "$tag" \
               --title "OpenCode ${resolved} 离线安装包（Linux）" \
