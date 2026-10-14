@@ -1,0 +1,115 @@
+name: Build Offline Installer
+
+run-name: Build offline installer (${{ inputs.version }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'opencode 版本号（如 2.0.29 / v2.0.29），或 latest 自动获取最新版'
+        required: true
+        default: 'latest'
+      variants:
+        description: 'Linux 平台变体：all 或逗号分隔（可选: linux-x64,linux-x64-baseline,linux-x64-musl,linux-x64-baseline-musl,linux-arm64,linux-arm64-musl）'
+        required: true
+        default: 'all'
+      create_release:
+        description: '创建/更新 GitHub Release 并上传安装包（无需登录即可公开下载）'
+        type: boolean
+        default: true
+      upload_artifact:
+        description: '同时上传到 Actions Artifacts（私有仓库请注意存储配额）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Linux offline package
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build offline packages
+        run: |
+          bash scripts/build-offline-package.sh \
+            --version "${{ inputs.version }}" \
+            --variants "${{ inputs.variants }}" \
+            --out-dir dist
+
+      - name: Show build result
+        run: |
+          ls -lh dist
+          echo
+          cat dist/BUILD_INFO
+          echo
+          cat dist/SHA256SUMS
+
+      - name: Upload artifacts
+        if: ${{ inputs.upload_artifact }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: opencode-offline-${{ inputs.version }}
+          path: |
+            dist/*.tar.gz
+            dist/SHA256SUMS
+          retention-days: 30
+
+      - name: Create or update release
+        if: ${{ inputs.create_release }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          resolved="$(sed -n 's/^version=//p' dist/BUILD_INFO)"
+          variants="$(sed -n 's/^variants=//p' dist/BUILD_INFO)"
+          tag="offline-${resolved}"
+
+          cat > release-notes.md <<EOF
+          ## OpenCode ${resolved} 离线安装包（Linux）
+
+          包含 OpenCode 官方独立可执行文件（standalone binary）：
+
+          - **不依赖 Node.js**
+          - 安装过程**无需联网**
+
+          包含平台: ${variants}
+
+          ### 使用方式
+
+              tar -xzf opencode-offline-${resolved}-*.tar.gz
+              cd opencode-offline-${resolved}-*
+              ./install.sh            # 自动识别平台，安装到 ~/.opencode/bin
+              ./install.sh --system   # 或安装到 /usr/local/bin（需要 sudo）
+
+          ### 校验（可选）
+
+              sha256sum -c SHA256SUMS
+
+          更多说明见包内 README.md。
+          EOF
+
+          files=(dist/*.tar.gz dist/SHA256SUMS)
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${files[@]}" --clobber
+          else
+            gh release create "$tag" "${files[@]}" \
+              --title "OpenCode ${resolved} 离线安装包（Linux）" \
+              --notes-file release-notes.md
+          fi
+          echo "Release: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$tag"
+
+      - name: Job summary
+        run: |
+          {
+            echo "## 构建结果"
+            echo
+            echo '```'
+            cat dist/BUILD_INFO
+            cat dist/SHA256SUMS
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
