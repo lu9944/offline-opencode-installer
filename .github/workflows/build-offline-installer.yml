@@ -52,12 +52,13 @@ jobs:
       - name: Acceptance test (offline install from built package)
         run: |
           set -euo pipefail
+          resolved="$(sed -n 's/^version=//p' dist/BUILD_INFO)"
           bundle="$(ls dist/*.tar.gz | head -1)"
           work="$RUNNER_TEMP/acceptance"
           rm -rf "$work"
           mkdir -p "$work"
           tar -xzf "$bundle" -C "$work"
-          bundle_dir="$(tar -tzf "$bundle" | head -1 | cut -d/ -f1)"
+          bundle_dir="$(basename "$bundle" .tar.gz)"
           cd "$work/$bundle_dir"
 
           echo "=== 包内平台 ==="
@@ -66,9 +67,13 @@ jobs:
           echo "=== 执行离线安装（模拟目标机器） ==="
           ./install.sh --install-dir "$work/bin" --no-modify-path
 
-          echo "=== 验证安装结果 ==="
-          "$work/bin/opencode" --version
-          "$work/bin/opencode2" --version
+          echo "=== 验证安装结果（期望包含 $resolved） ==="
+          main_out="$("$work/bin/opencode" --version)"
+          shim_out="$("$work/bin/opencode2" --version)"
+          echo "opencode  -> $main_out"
+          echo "opencode2 -> $shim_out"
+          [[ "$main_out" == *"$resolved"* ]] || { echo "版本不符: $main_out"; exit 1; }
+          [[ "$shim_out" == *"$resolved"* ]] || { echo "版本不符: $shim_out"; exit 1; }
 
       - name: Upload artifacts
         if: ${{ inputs.upload_artifact }}
@@ -118,11 +123,15 @@ jobs:
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "${files[@]}" --clobber
           else
-            gh release create "$tag" "${files[@]}" \
+            gh release create "$tag" \
               --title "OpenCode ${resolved} 离线安装包（Linux）" \
               --notes-file release-notes.md
+            gh release upload "$tag" "${files[@]}" --clobber
           fi
+          # 显式发布（gh 带附件创建 Release 时最后一步有时不会自动发布）
+          gh release edit "$tag" --draft=false --latest
           echo "Release: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$tag"
+          gh release view "$tag" --json isDraft,publishedAt --jq '{isDraft, publishedAt}'
 
       - name: Job summary
         run: |
