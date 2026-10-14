@@ -4,7 +4,7 @@
 
 - 内含 OpenCode 官方编译的**独立可执行文件**（standalone binary），**不依赖 Node.js**
 - 支持指定任意 release 版本（如 `2.0.29`），或 `latest` 自动获取最新版
-- 离线包解压后运行 `./install.sh` 即可完成安装，安装过程**无需联网**
+- 离线包解压后运行 `bash install.sh` 即可完成安装，安装过程**无需联网**
 - 自动识别目标平台：x86_64 / aarch64、glibc / musl、是否需要 baseline（无 AVX2 的 CPU）
 
 ## 工作原理
@@ -26,16 +26,16 @@
    | `create_release` | 创建/更新 Release 并上传安装包 | `true` |
    | `upload_artifact` | 同时上传到 Actions Artifacts（私有仓库注意存储配额） | `false` |
 
-3. 构建完成后，从 **Releases** 下载 `opencode-offline-<版本>-linux-*.tar.gz`
+3. 构建完成后，从 **Releases** 下载 `opencode-offline-<版本>-linux-*.zip`
    （或从 Artifacts 下载）。
 
 4. 把压缩包拷贝到目标 Linux 机器（U 盘 / scp / 内网传输均可）：
 
    ```bash
-   tar -xzf opencode-offline-*.tar.gz
+   unzip opencode-offline-*.zip
    cd opencode-offline-*
-   ./install.sh              # 自动识别平台，默认安装到 ~/.opencode/bin
-   ./install.sh --system     # 或安装到 /usr/local/bin（需要 sudo）
+   bash install.sh           # 自动识别平台，默认安装到 ~/.opencode/bin
+   bash install.sh --system  # 或安装到 /usr/local/bin（需要 sudo）
    ```
 
    然后新开终端运行 `opencode`，首次使用在 TUI 中执行 `/connect` 连接模型。
@@ -68,11 +68,11 @@ opencode-offline-<版本>-<变体>/
 `install.sh` 常用选项：
 
 ```bash
-./install.sh --list                              # 列出包内平台
-./install.sh --install-dir /opt/opencode/bin     # 自定义安装目录
-./install.sh --system                            # 安装到 /usr/local/bin
-./install.sh --variant linux-x64-musl            # 强制指定平台
-./install.sh --no-modify-path --init-config      # 不改 PATH、生成基础配置
+bash install.sh --list                           # 列出包内平台
+bash install.sh --install-dir /opt/opencode/bin  # 自定义安装目录
+bash install.sh --system                         # 安装到 /usr/local/bin
+bash install.sh --variant linux-x64-musl         # 强制指定平台
+bash install.sh --no-modify-path --init-config   # 不改 PATH、生成基础配置
 ```
 
 ## 本地构建（可选）

@@ -53,12 +53,12 @@ jobs:
         run: |
           set -euo pipefail
           resolved="$(sed -n 's/^version=//p' dist/BUILD_INFO)"
-          bundle="$(ls dist/*.tar.gz | head -1)"
+          bundle="$(ls dist/*.zip | head -1)"
           work="$RUNNER_TEMP/acceptance"
           rm -rf "$work"
           mkdir -p "$work"
-          tar -xzf "$bundle" -C "$work"
-          bundle_dir="$(basename "$bundle" .tar.gz)"
+          unzip -q "$bundle" -d "$work"
+          bundle_dir="$(basename "$bundle" .zip)"
           cd "$work/$bundle_dir"
 
           echo "=== 包内平台 ==="
@@ -81,7 +81,7 @@ jobs:
         with:
           name: opencode-offline-${{ inputs.version }}
           path: |
-            dist/*.tar.gz
+            dist/*.zip
             dist/SHA256SUMS
           retention-days: 30
 
@@ -107,10 +107,10 @@ jobs:
 
           ### 使用方式
 
-              tar -xzf opencode-offline-${resolved}-*.tar.gz
+              unzip opencode-offline-${resolved}-*.zip
               cd opencode-offline-${resolved}-*
-              ./install.sh            # 自动识别平台，安装到 ~/.opencode/bin
-              ./install.sh --system   # 或安装到 /usr/local/bin（需要 sudo）
+              bash install.sh            # 自动识别平台，安装到 ~/.opencode/bin
+              bash install.sh --system   # 或安装到 /usr/local/bin（需要 sudo）
 
           ### 校验（可选）
 
@@ -119,7 +119,7 @@ jobs:
           更多说明见包内 README.md。
           EOF
 
-          files=(dist/*.tar.gz dist/SHA256SUMS)
+          files=(dist/*.zip dist/SHA256SUMS)
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "${files[@]}" --clobber
           else

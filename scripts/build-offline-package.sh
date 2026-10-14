@@ -80,7 +80,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ---------- 预检 ----------
-for tool in curl tar python3 sha256sum; do
+for tool in curl tar python3 sha256sum zip; do
     command -v "$tool" >/dev/null 2>&1 || die "缺少必要工具: $tool"
 done
 
@@ -256,14 +256,15 @@ done
 
 (cd "$bundle_dir" && sha256sum install.sh README.md VERSION binaries/*/opencode > SHA256SUMS)
 
-log "打包 $bundle_name.tar.gz ..."
-tar -czf "$out_dir/$bundle_name.tar.gz" -C "$work_dir/stage" "$bundle_name"
-(cd "$out_dir" && sha256sum "$bundle_name.tar.gz" >> SHA256SUMS)
+out_abs="$(cd "$out_dir" && pwd)"
+log "打包 $bundle_name.zip ..."
+(cd "$work_dir/stage" && zip -r -q "$out_abs/$bundle_name.zip" "$bundle_name")
+(cd "$out_dir" && sha256sum "$bundle_name.zip" >> SHA256SUMS)
 
 {
     echo "version=$version"
     echo "variants=${selected[*]}"
-    echo "bundle=$bundle_name.tar.gz"
+    echo "bundle=$bundle_name.zip"
 } > "$out_dir/BUILD_INFO"
 
 # ---------- 清理与汇总 ----------

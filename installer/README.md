@@ -8,16 +8,19 @@
 1. 解压并进入目录
 
    ```bash
-   tar -xzf opencode-offline-*.tar.gz
+   unzip opencode-offline-*.zip
    cd opencode-offline-*
    ```
 
 2. 运行安装脚本
 
    ```bash
-   ./install.sh                 # 自动识别平台，默认安装到 ~/.opencode/bin
-   ./install.sh --system        # 或安装到 /usr/local/bin（需要 sudo）
+   bash install.sh              # 自动识别平台，默认安装到 ~/.opencode/bin
+   bash install.sh --system     # 或安装到 /usr/local/bin（需要 sudo）
    ```
+
+   > 用 `bash install.sh` 调用无需可执行权限（在 Windows 上解压后再传到 Linux 也不会丢权限）；
+   > 在 Linux 上用 `unzip` 解压时权限会被保留，也可以直接 `./install.sh`。
 
 3. 新开终端（或按脚本提示 export PATH），然后启动：
 
@@ -78,9 +81,9 @@ SHA-512 校验），可对比 Release 页面上的 `SHA256SUMS` 确认传输完�
   可以，安装不访问网络。但 OpenCode 调用模型需要能访问你配置的 LLM
   服务；内网环境可配置自建的 OpenAI 兼容端点（如 Ollama、vLLM 等）。
 - **运行报 illegal instruction？**
-  CPU 不支持 AVX2，用 `./install.sh --variant linux-x64-baseline`。
+  CPU 不支持 AVX2，用 `bash install.sh --variant linux-x64-baseline`。
 - **Alpine / musl 系统？**
-  用 `./install.sh --variant linux-x64-musl` 或 `linux-arm64-musl`。
+  用 `bash install.sh --variant linux-x64-musl` 或 `linux-arm64-musl`。
 - **如何卸载？**
   删除安装目录（默认 `~/.opencode`）中的二进制即可；配置在
   `~/.config/opencode/`，按需保留或删除。
