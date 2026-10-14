@@ -12,7 +12,7 @@ on:
       variants:
         description: 'Linux 平台变体：all 或逗号分隔（可选: linux-x64,linux-x64-baseline,linux-x64-musl,linux-x64-baseline-musl,linux-arm64,linux-arm64-musl）'
         required: true
-        default: 'all'
+        default: 'linux-x64,linux-arm64'
       create_release:
         description: '创建/更新 GitHub Release 并上传安装包（无需登录即可公开下载）'
         type: boolean

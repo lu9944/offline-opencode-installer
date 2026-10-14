@@ -22,7 +22,7 @@
    | 参数 | 说明 | 默认值 |
    | --- | --- | --- |
    | `version` | opencode 版本号，如 `2.0.29` / `v2.0.29`，或 `latest` | `latest` |
-   | `variants` | `all` 或逗号分隔的平台列表（见下表） | `all` |
+   | `variants` | `all` 或逗号分隔的平台列表（见下表） | `linux-x64,linux-arm64` |
    | `create_release` | 创建/更新 Release 并上传安装包 | `true` |
    | `upload_artifact` | 同时上传到 Actions Artifacts（私有仓库注意存储配额） | `false` |
 
@@ -94,7 +94,8 @@ bash scripts/build-offline-package.sh --version 2.0.29 --variants linux-x64
 
 - 目标机器离线安装没问题，但 OpenCode 使用模型时需能访问你配置的
   LLM 服务；纯内网可配置自建的 OpenAI 兼容端点（Ollama、vLLM 等）。
-- 每次构建全部 6 个变体约产生 ~550 MB 的压缩包；只需 x64 时可只选
-  `linux-x64`（约 95 MB）。
+- 默认只构建 x86_64（`linux-x64`）与 aarch64（`linux-arm64`）两个平台，
+  压缩包约 180 MB；需要 Alpine(musl) 或老 CPU(baseline) 支持时，在
+  `variants` 中追加对应变体即可（全部 6 个变体约 550 MB）。
 - 私有仓库的 Actions Artifacts 受存储配额限制，故工作流默认
   `upload_artifact=false`，通过 Release 分发安装包。
